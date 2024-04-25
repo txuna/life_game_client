@@ -103,9 +103,9 @@ func SendPing() {
 func (client *LifeGameClient) OnConnect() {
 	fmt.Println("Connect!")
 	/* 로그인 패킷 전송 */
-	//SendJoin("tuuna2983", "password", "tuuna")
-	SendLogin("tuuna2983", "password")
-	fmt.Println("Send Login")
+	SendJoin("tuuna2983", "password", "tuuna")
+	//SendLogin("tuuna2983", "password")
+	//fmt.Println("Send Login")
 }
 
 func (client *LifeGameClient) OnReceive(packetData []byte) {
