@@ -4,7 +4,6 @@ import (
 	"client/network"
 	"client/protocol"
 	"fmt"
-	"time"
 )
 
 type LifeGameClient struct {
@@ -47,6 +46,8 @@ func (client *LifeGameClient) PacketProcess() {
 				} else if packetId == protocol.PACKET_ID_JOIN_RES {
 					fmt.Println("Join Response")
 					ProcessPacketJoin(bodySize, bodyData)
+				} else if packetId == protocol.PACKET_ID_PING_RES {
+					fmt.Println("PONG")
 				}
 			}
 		}
@@ -88,22 +89,19 @@ func ProcessPacketLogin(bodySize int16, bodyData []byte) {
 }
 
 func SendPing() {
-	for {
-		return
-		time.Sleep(1 * time.Millisecond)
-		pingReq := protocol.PingReqPacket{
-			Ping: protocol.PING,
-		}
-
-		packet, packetSize := pingReq.EncodingPacket()
-		network.SendToServer(packet, packetSize)
+	pingReq := protocol.PingReqPacket{
+		Ping: protocol.PING,
 	}
+
+	packet, packetSize := protocol.EncodingPacket(protocol.PACKET_ID_PING_REQ, 0, &pingReq)
+	network.SendToServer(packet, packetSize)
 }
 
 func (client *LifeGameClient) OnConnect() {
 	fmt.Println("Connect!")
+	SendPing()
 	/* 로그인 패킷 전송 */
-	SendJoin("tuuna2983", "password", "tuuna")
+	//SendJoin("tuuna2983", "password", "tuuna")
 	//SendLogin("tuuna2983", "password")
 	//fmt.Println("Send Login")
 }

@@ -4,6 +4,8 @@ import (
 	"client/network"
 	"encoding/binary"
 	"reflect"
+
+	"github.com/vmihailenco/msgpack"
 )
 
 const (
@@ -213,54 +215,28 @@ func (joinRes *JoinResPacket) Decoding(bodyData []byte) bool {
 	return err == nil
 }
 
+/* 핑 요청 */
 type PingReqPacket struct {
-	Ping int8
+	Ping int8 `msgpack:"ping"`
 }
 
-func (pingReq PingReqPacket) EncodingPacket() ([]byte, int16) {
-	totalSize := _packetHeaderSize + int16(network.Sizeof(reflect.TypeOf(int8(0))))
-	sendBuf := make([]byte, totalSize)
-	writer := network.MakeWrite(sendBuf, true)
-	EncodingPacketHeader(&writer, totalSize, PACKET_ID_PING_REQ, 0)
-	writer.WriteS8(pingReq.Ping)
-	return sendBuf, totalSize
-}
-
-func (pingReq *PingReqPacket) Decoding(bodyData []byte) bool {
-	bodySize := network.Sizeof(reflect.TypeOf(int8(0)))
-	if len(bodyData) != bodySize {
-		return false
-	}
-
-	reader := network.MakeReader(bodyData, true)
-	var err error
-	pingReq.Ping, err = reader.ReadS8()
-	return err == nil
-}
-
+/* 핑 응답 */
 type PingResPacket struct {
-	Pong int8
+	Pong int8 `msgpack:"pong"`
 }
 
-func (pingRes PingResPacket) EncodingPacket() ([]byte, int16) {
-	totalSize := _packetHeaderSize + int16(network.Sizeof(reflect.TypeOf(int8(0))))
-	sendBuf := make([]byte, totalSize)
-	writer := network.MakeWrite(sendBuf, true)
-	EncodingPacketHeader(&writer, totalSize, PACKET_ID_PING_RES, 0)
-	writer.WriteS8(pingRes.Pong)
-	return sendBuf, totalSize
+func EncodingPacket(pkId int16, pkType int8, v interface{}) ([]byte, int16) {
+	raw, _ := msgpack.Marshal(v)
+	totalSize := _packetHeaderSize + int16(len(raw))
+	sendBuff := make([]byte, totalSize)
+
+	writer := network.MakeWrite(sendBuff, true)
+	EncodingPacketHeader(&writer, int16(totalSize), pkId, pkType)
+	writer.WriteBytes(raw)
+	return sendBuff, int16(totalSize)
 }
 
-func (pingRes *PingResPacket) Decoding(bodyData []byte) bool {
-	bodySize := network.Sizeof(reflect.TypeOf(int8(0)))
-	if len(bodyData) != bodySize {
-		return false
-	}
-
-	reader := network.MakeReader(bodyData, true)
-
-	var err error
-	pingRes.Pong, err = reader.ReadS8()
-
+func DecodingPacket(bodyData []byte, v interface{}) bool {
+	err := msgpack.Unmarshal(bodyData, v)
 	return err == nil
 }
